@@ -1,0 +1,5 @@
+packrat/lib*/
+.Rproj.user
+data/*
+*Rdata
+packrat/src/

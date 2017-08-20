@@ -1,0 +1,70 @@
+---
+title: "Rossman Data Acquisiton"
+output: html_notebook
+---
+
+This document loads data from the Rossman Stores Kaggle competition,
+processes it into a "standard" hierarchical record structure,
+then archives the result to disk. (A production data system would
+be much more complex.)
+
+NOTE! Kaggle's web site does not allow automated downloads -- it
+wants you to accept rules before downloading. Therefore, you must download
+the following two files to the `data` directory before running
+this notebook:
+
+* `https://www.kaggle.com/c/rossmann-store-sales/download/train.csv.zip`
+* `https://www.kaggle.com/c/rossmann-store-sales/download/store.csv.zip`
+
+```{r setup}
+options(stringsAsFactors = FALSE)
+
+library(tidyverse)
+library(magrittr)
+```
+
+```{r load}
+train_dat <- read_csv("data/train.csv.zip", col_types="iiDiiiici")
+store_dat <- read_csv("data/store.csv.zip")
+
+print(sample_n(train_dat, 5))
+print(sample_n(store_dat, 5))
+```
+
+```{r transform, message=FALSE}
+# Convert each store into a list containing slots per column,
+# with a list of records for the train data.
+# This takes a minute...
+
+# don't need the attributes anymore, and the pipeline preserves 'em
+attr(train_dat, "spec") <- NULL
+attr(store_dat, "spec") <- NULL
+
+# records per store, with last 90 days of sales activity
+dat <- split(train_dat, train_dat$Store) %>%
+  map(function(onestore) {
+    ret <- filter(store_dat, Store == onestore$Store[[1]]) %>%
+      as.list
+    ret$activity <- onestore %>%
+      tail(90) %>% # just last 90 days, for space...
+      split(.$Date) %>%
+      map(as.list)
+    ret
+  })
+
+# if we drop the last element of $activity, for each record,
+# we have the training set:
+training_set <- map(dat,
+        function(onestore) {
+          onestore$activity <- onestore$activity[-length(onestore$activity)]
+          onestore
+        })
+test_set <- dat # as-is
+
+```
+
+```{r save}
+save(training_set, test_set, file="rossman_data.Rdata")
+system("ls -l rossman_data.Rdata")
+```
+
