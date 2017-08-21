@@ -23,6 +23,12 @@ Source: CRAN
 Version: 0.12.12
 Hash: 8b3d5ebb9a9a4ab5c86b3a81b0cfb774
 
+Package: argparse
+Source: CRAN
+Version: 1.0.4
+Hash: b04cdbae001b8d4705a717c2b32cdef7
+Requires: findpython, getopt, proto, rjson
+
 Package: assertthat
 Source: CRAN
 Version: 0.2.0
@@ -105,6 +111,11 @@ Version: 0.10.1
 Hash: 54d95f4ec6d0300100413ed0127d89ae
 Requires: stringr
 
+Package: findpython
+Source: CRAN
+Version: 1.0.2
+Hash: dc0fc8c83d9908378215c9d014c9c22a
+
 Package: forcats
 Source: CRAN
 Version: 0.2.0
@@ -115,6 +126,11 @@ Package: formatR
 Source: CRAN
 Version: 1.5
 Hash: 258cf79a8dbeedf1c981cdb53837d2af
+
+Package: getopt
+Source: CRAN
+Version: 1.20.0
+Hash: 951e83029bb5f798b53d7b53cbc50be9
 
 Package: ggplot2
 Source: CRAN
@@ -246,6 +262,11 @@ Version: 1.8.4
 Hash: 8fbaff6962e3421b5c9652eebae36159
 Requires: Rcpp
 
+Package: proto
+Source: CRAN
+Version: 1.0.0
+Hash: f9a2528572320c1e0bc8783dfd6e0fae
+
 Package: psych
 Source: CRAN
 Version: 1.7.3.21
@@ -280,6 +301,11 @@ Source: CRAN
 Version: 1.4.2
 Hash: df8d1de05444abd99e423c1e3b84c9b0
 Requires: Rcpp, plyr, stringr
+
+Package: rjson
+Source: CRAN
+Version: 0.2.15
+Hash: def074f38d0cff3b597649ee6f976128
 
 Package: rlang
 Source: CRAN
