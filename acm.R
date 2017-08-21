@@ -4,6 +4,8 @@ options(stringsAsFactors = FALSE)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(futile.logger))
+suppressPackageStartupMessages(library(glue))
+suppressPackageStartupMessages(library(assertthat))
 source("utils.R")
 source("dsl.R")
 
@@ -13,7 +15,11 @@ parser$add_argument("--debug", default="INFO",
 parser$add_argument('varargs', metavar='command', nargs='+',
                     help='train <from> <to>, server <from>, client, report <from> <to>, <test>')
 
-args <- parser$parse_args()
+args <- if (interactive()) {
+  parser$parse_args(c("train", "rossman_model.R", "rossman_model.Rout"))
+} else {
+  parser$parse_args()
+}
 
 if (args$varargs[[1]] == "train") {
   flog.threshold(args$debug)
@@ -26,6 +32,8 @@ if (args$varargs[[1]] == "train") {
   if (!file.exists(infilename)) die("specified input file doesn't exist")
   model <- eval(parse(file=infilename))
   
+  print(model) 
+  
   save(model, file=outfilename)
   flog.info("Completed train!")
 } else if (args$varargs[[1]] == "server") {
@@ -35,7 +43,8 @@ if (args$varargs[[1]] == "train") {
 } else if (args$varargs[[1]] == "report") {
   
 } else if (args$varargs[[1]] == "test") {
-  
+  suppressPackageStartupMessages(library(testthat))
+  test_dir("test")
 } else {
   die(paste("Unknown args", args, collapse=", "))
 }
