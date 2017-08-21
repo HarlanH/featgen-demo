@@ -3,3 +3,4 @@ packrat/lib*/
 data/*
 *Rdata
 packrat/src/
+rossman_model.Rout

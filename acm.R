@@ -3,6 +3,9 @@
 options(stringsAsFactors = FALSE)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(argparse))
+suppressPackageStartupMessages(library(futile.logger))
+source("utils.R")
+source("dsl.R")
 
 parser <- ArgumentParser(description='Acme Sales Model')
 parser$add_argument("--debug", default="INFO",
@@ -12,14 +15,27 @@ parser$add_argument('varargs', metavar='command', nargs='+',
 
 args <- parser$parse_args()
 
-if (args[[1]] == "train") {
+if (args$varargs[[1]] == "train") {
+  flog.threshold(args$debug)
+  flog.info("Starting train...")
+  if (length(args$varargs) != 3) die("Usage: acm.R train infile.R outfile.Rout")
+  infilename <- args$varargs[[2]]
+  outfilename <- args$varargs[[3]]
   
-} else if (args[[1]] == "server") {
+  # eval the infile, saving the results to outfile
+  if (!file.exists(infilename)) die("specified input file doesn't exist")
+  model <- eval(parse(file=infilename))
   
-} else if (args[[1]] == "client") {
+  save(model, file=outfilename)
+  flog.info("Completed train!")
+} else if (args$varargs[[1]] == "server") {
   
-} else if (args[[1]] == "report") {
+} else if (args$varargs[[1]] == "client") {
   
-} else if (args[[1]] == "test") {
+} else if (args$varargs[[1]] == "report") {
   
+} else if (args$varargs[[1]] == "test") {
+  
+} else {
+  die(paste("Unknown args", args, collapse=", "))
 }
