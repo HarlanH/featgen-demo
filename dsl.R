@@ -109,11 +109,16 @@ train <- function(x, ...) {
   assert_that(inherits(x, "acm"))
   assert_that(x %has_name% "features")
   assert_that(x %has_name% "data")
+  args <- list(...)
+  assert_that(args %has_name% "target")
   
   # cross-validate to get metrics, then store
   
   # build a final model and add to self
-  x$model <- lm(current_sales ~ ., x$data)
+  x$target <- args$target
+
+  x$model <- lm(as.formula(glue("{x$target} ~ .")), 
+                data=x$data)
   
   x
 }

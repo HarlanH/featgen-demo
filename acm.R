@@ -15,6 +15,8 @@ source("dsl.R")
 parser <- ArgumentParser(description='Acme Sales Model')
 parser$add_argument("--debug", default="INFO",
                     help="Debug level")
+parser$add_argument("--port", default="8000",
+                    help="Port for server")
 parser$add_argument('varargs', metavar='command', nargs='+',
                     help='train <from> <to>, server <from>, client, report <from> <to>, <test>')
 
@@ -38,7 +40,18 @@ if (args$varargs[[1]] == "train") {
   saveRDS(model, file=outfilename)
   flog.info("Completed train!")
 } else if (args$varargs[[1]] == "server") {
+  flog.threshold(args$debug)
+  flog.info("Starting server...")
+  if (length(args$varargs) != 2) die("Usage: acm.R server infile.R")
+  suppressPackageStartupMessages(library(plumber))
+  infilename <- args$varargs[[2]]
+  model <- readRDS(infilename) # NB: we're in the global environment!
+  flog.info("Model loaded")
   
+  server <- plumb("server.R")
+  flog.info("Starting server...")
+  server$run(port=as.numeric(args$port))
+  flog.info("Closing...")
 } else if (args$varargs[[1]] == "client") {
   
 } else if (args$varargs[[1]] == "print") {
