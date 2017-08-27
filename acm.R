@@ -16,7 +16,7 @@ parser$add_argument('varargs', metavar='command', nargs='+',
                     help='train <from> <to>, server <from>, client, report <from> <to>, <test>')
 
 args <- if (interactive()) {
-  parser$parse_args(c("train", "rossman_model.R", "rossman_model.Rout"))
+  parser$parse_args(c("train", "rossman_model.R", "rossman_model.Rout", "--debug=TRACE"))
 } else {
   parser$parse_args()
 }

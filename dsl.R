@@ -1,4 +1,5 @@
 acme_chain_model <- function(custname) {
+  tracethis()
   obj <- list(custname = custname,
               features = list())
   class(obj) <- "acm"
@@ -6,40 +7,57 @@ acme_chain_model <- function(custname) {
 }
 
 print.acm <- function(obj, ...) {
-  print(glue("
+  
+  cat(glue("
     Acme Chain Model
     ----------------
 
     Customer = {obj$custname}
-            "))
+    "), "\n\n")
   
   # print features
+  if ("features" %in% names(obj)) {
+    feature_names <- paste(paste("*", map_chr(obj$features, ~ .$pretty_name)),
+                           collapse="\n")
+    cat("Features:\n\n")
+    cat(feature_names, "\n\n")
+  }
+  
   # print data summary
+  if ("data" %in% names(obj)) {
+    cat("Data:\n\n```\n")
+    glimpse(obj$data)
+    cat("```\n\n")
+  }
+
   # print model summary
   
 }
 
 generic_feature <- list(
-  name="REPLACEME",
+  name="REPLACEME -- must be the name of the slot",
   pretty_name="Replace Me Too",
   extract = function(self, data, ...) {
-    data[[self$name]]
+    ret=data_frame(x=data[[self$name]])
+    names(ret) <- self$name
+    ret
   }
 )
 
-generic_activity_feature <- list(
-  name="REPLACEME",
-  pretty_name="Replace Me Too",
-  extract = function(self, data, ...) {
-    data$activity[[self$name]]
-  }
-)
+# this may not be a thing...?
+# generic_activity_feature <- list(
+#   name="REPLACEME",
+#   pretty_name="Replace Me Too",
+#   extract = function(self, data, ...) {
+#     data$activity[[self$name]]
+#   }
+# )
 
 competition_distance <- function(x, ...) {
   assert_that(inherits(x, "acm"))
   
   feat <- generic_feature %>%
-    list_modify(name = "competition_distance",
+    list_modify(name = "CompetitionDistance",
                 pretty_name = "Distance to Nearest Competition")
   feat <- append(feat, list(...))
   
@@ -50,9 +68,14 @@ competition_distance <- function(x, ...) {
 current_sales <- function(x, ...) {
   assert_that(inherits(x, "acm"))
   
-  feat <- generic_activity_feature %>%
-    list_modify(name = "current_sales",
-                pretty_name = "Current Week Sales")
+  feat <- list(
+    name="current_sales",
+    pretty_name="Current Sales",
+    extract = function(self, data, ...) {
+      data_frame(current_sales=data$activity[[length(data$activity)]]$Sales)
+    }
+  )
+  
   feat <- append(feat, list(...))
   
   x$features <- append(x$features, list(current_sales = feat))
@@ -60,17 +83,25 @@ current_sales <- function(x, ...) {
 }
 
 get_data <- function(x, ...) {
+  tracethis()
   assert_that(inherits(x, "acm"))
   
+  # get the raw data
+  raw_data <- readRDS(glue('{x$custname}.Rdata'))
+  
   # foreach feature
-    # extract the value and put into a vector
+    # extract the values and put into a vector
     # do post-processing
   # put results into a data_frame
-  x$data = data_frame()
+  x$data <- map_dfc(x$features, function(feat) {
+    flog.trace(glue("Extracting {feat$name}"))
+    map_dfr(raw_data, ~ feat$extract(feat, .))
+  })
   x
 }
 
 train <- function(x, ...) {
+  tracethis()
   assert_that(inherits(x, "acm"))
   assert_that(x %has_name% "features")
   assert_that(x %has_name% "data")
