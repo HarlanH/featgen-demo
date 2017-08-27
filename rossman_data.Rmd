@@ -64,7 +64,9 @@ test_set <- dat # as-is
 ```
 
 ```{r save}
-save(training_set, test_set, file="rossman.Rdata")
-system("ls -l rossman.Rdata")
+saveRDS(training_set, file="rossman.Rdata")
+saveRDS(test_set, file="rossman-test.Rdata")
+
+system("ls -l rossman*.Rdata")
 ```
 
