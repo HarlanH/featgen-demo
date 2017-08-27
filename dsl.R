@@ -31,7 +31,11 @@ print.acm <- function(obj, ...) {
   }
 
   # print model summary
-  
+  if ("model" %in% names(obj)) {
+    cat("Model:\n\n```\n")
+    print(summary(obj$model))
+    cat("```\n\n")
+  }
 }
 
 generic_feature <- list(
@@ -88,15 +92,15 @@ get_data <- function(x, ...) {
   
   # get the raw data
   raw_data <- readRDS(glue('{x$custname}.Rdata'))
+  flog.debug("Got %d data points", length(raw_data))
   
-  # foreach feature
-    # extract the values and put into a vector
-    # do post-processing
-  # put results into a data_frame
+  # foreach feature, foreach data point, build up a data_frame
   x$data <- map_dfc(x$features, function(feat) {
     flog.trace(glue("Extracting {feat$name}"))
     map_dfr(raw_data, ~ feat$extract(feat, .))
   })
+  flog.debug("Loaded into %d X %d data_frame", nrow(x$data), ncol(x$data))
+  
   x
 }
 
@@ -109,6 +113,7 @@ train <- function(x, ...) {
   # cross-validate to get metrics, then store
   
   # build a final model and add to self
+  x$model <- lm(current_sales ~ ., x$data)
   
   x
 }

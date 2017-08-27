@@ -1,6 +1,9 @@
 #!/usr/bin/env Rscript
 
-options(stringsAsFactors = FALSE)
+options(stringsAsFactors = FALSE,
+        warnPartialMatchArgs = TRUE,
+        warnPartialMatchAttr = TRUE,
+        warnPartialMatchDollar = TRUE)
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(futile.logger))
@@ -32,14 +35,19 @@ if (args$varargs[[1]] == "train") {
   if (!file.exists(infilename)) die("specified input file doesn't exist")
   model <- eval(parse(file=infilename))
   
-  print(model) 
-  
-  save(model, file=outfilename)
+  saveRDS(model, file=outfilename)
   flog.info("Completed train!")
 } else if (args$varargs[[1]] == "server") {
   
 } else if (args$varargs[[1]] == "client") {
   
+} else if (args$varargs[[1]] == "print") {
+  if (length(args$varargs) != 2) die("Usage: acm.R print infile.R")
+  infilename <- args$varargs[[2]]
+  model <- readRDS(infilename)
+  
+  print(model)
+
 } else if (args$varargs[[1]] == "report") {
   
 } else if (args$varargs[[1]] == "test") {
