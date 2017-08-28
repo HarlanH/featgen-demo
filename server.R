@@ -1,9 +1,23 @@
+# curl --data '{"Store": "test!", "CompetitionDistance": 0}' "http://localhost:8000/predict"
 
 #* @post /predict
 function(req, ...){
-  obj <- list(...)
-  # TODO: extract object into df and predict on that
-  ret <- list(x=predict(model$model, newdata=obj))
+  obj <- list(...) # should be the same as the objects we trained on
+  flog.info(glue("Predicting store: {obj$Store}"))
+  
+  # extract object into df and predict on that
+  predictor_features <- model$features
+  predictor_features[[model$target]] <- NULL # drop target
+  newdata <- map_dfc(predictor_features, function(feat) {
+    flog.trace(glue("Extracting {feat$name}"))
+    feat$extract(feat, obj)
+  })
+  
+  flog.debug(paste(names(cars), collapse=", "))
+  
+  ret <- list(x=predict(model$model, newdata=newdata))
   names(ret) <- model$target
+  
+  flog.trace("done")
   ret
 }
