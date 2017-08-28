@@ -53,7 +53,9 @@ if (args$varargs[[1]] == "train") {
   server$run(port=as.numeric(args$port))
   flog.info("Closing...")
 } else if (args$varargs[[1]] == "client") {
-  
+  flog.info("Starting client...")
+  shiny::runApp("client")
+  flog.info("Closing...")
 } else if (args$varargs[[1]] == "print") {
   if (length(args$varargs) != 2) die("Usage: acm.R print infile.R")
   infilename <- args$varargs[[2]]
