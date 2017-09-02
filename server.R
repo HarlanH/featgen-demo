@@ -21,12 +21,11 @@ function(req, ...){
     flog.trace(glue("Extracting {feat$name}"))
     feat$extract(feat, obj)
   })
-  
-  flog.debug(paste(names(cars), collapse=", "))
-  
-  ret <- list(x=predict(model$model, newdata=newdata))
+  #print(newdata)
+  ret <- list(x=predict(model$model, newdata=newdata)$data$response)
   names(ret) <- model$target
-  
+  #print(ret)
+  #debug()
   flog.trace("done")
   ret
 }

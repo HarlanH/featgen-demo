@@ -19,8 +19,8 @@ source("dsl.R")
 parser <- ArgumentParser(description='Acme Sales Model')
 parser$add_argument("--debug", default="INFO",
                     help="Debug level")
-parser$add_argument("--port", default="8000",
-                    help="Port for server")
+parser$add_argument("--port", 
+                    help="Port for server (default 8000) or client (default 8001)")
 parser$add_argument('varargs', metavar='command', nargs='+',
                     help='train <from> <to>, server <from>, client, report <from> <to>, <test>')
 
@@ -56,12 +56,12 @@ if (args$varargs[[1]] == "train") { # train --------
   
   server <- plumb("server.R")
   flog.info("Starting server...")
-  server$run(port=as.numeric(args$port))
+  server$run(port=if (!is.null(args$port)) as.numeric(args$port) else 8000)
   flog.info("Closing...")
   
 } else if (args$varargs[[1]] == "client") { # client -------
   flog.info("Starting client...")
-  shiny::runApp("client")
+  shiny::runApp("client", port=if (!is.null(args$port)) as.numeric(args$port) else 8001)
   flog.info("Closing...")
   
 } else if (args$varargs[[1]] == "print") { # print ---------
