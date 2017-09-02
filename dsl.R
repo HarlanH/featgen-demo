@@ -87,34 +87,65 @@ current_sales <- function(x, ...) {
   x
 }
 
-#' processing NA/missing data policy
-#' 
-#' Note: casts all columns to numeric/doubles!
+infer_trans <- function(df, trans) {
+  tracethis()
+  assert_that(is.data.frame(df))
+  assert_that(trans %in% c('log', 'sqrt', 'boxcox'))
+  
+  if (trans == 'boxcox') {
+    map_dfc(df, function(col) {
+      boxcoxnc(col, verbose=FALSE, plot=FALSE)$lambda.hat
+    })
+  } else NULL
+}
+
+apply_trans <- function(df, trans, metadata) {
+  tracethis()
+  assert_that(is.data.frame(df))
+  assert_that(trans %in% c('log', 'sqrt', 'boxcox'))
+  
+  if (trans %in% c('log', 'sqrt')) {
+    map_dfc(df, ~ do.call(trans, .))
+  } else if (trans == 'boxcox') {
+    imap_dfc(df, function(col, pos) {
+      if (metadata[[pos]] == 0) 
+        log(col)
+      else
+        (col^metadata[[pos]] - 1) / (metadata[[pos]])
+    })
+  }
+}
+
+#' part 1 of NA/missing data policy
 #' 
 #' @param df a data frame
 #' @param policy one of 'min', 'median', 'mean', 'max', 'mode', or a scalar
-#' @return data frame of same shape as df, with no NAs
-process_missing <- function(df, policy) {
+#' @return metadata to be used in part 2
+infer_missing <- function(df, policy) {
   tracethis()
   assert_that(is.data.frame(df))
   assert_that(length(policy) == 1)
   
-  # this doesn't yet handle non-numeric types...
-  ret <- map_dfc(df, function(col) {
-    col <- as.numeric(col)
-    rep_val <- case_when(
-      policy == 'min' ~ min(col, na.rm = TRUE),
-      policy == 'max' ~ max(col, na.rm = TRUE),
-      policy == 'median' ~ median(col, na.rm = TRUE),
-      policy == 'mean' ~ mean(col, na.rm = TRUE),
-      policy == 'mode' ~ as.numeric(names(which.max(table(col, useNA="no")))),
-      TRUE ~ as.numeric(policy)
-    )
-    col[is.na(col)] <- rep_val
-    col
+  # foreach column, summarize with a replacement value
+  map_dfc(df, function(col) {
+    if (policy %in% c("min", 'max', 'median', 'mean'))
+      do.call(policy, args=list(col, na.rm=TRUE))
+    else if (policy == 'mode') {
+      val <- names(which.max(table(col, useNA="no")))
+      as(val, class(col))
+    } else as(policy, class(col))
   })
-  assert_that(!anyNA(ret))
-  ret
+}
+
+apply_missing <- function(df, metadata) {
+  assert_that(are_equal(names(df), names(metadata)))
+  
+  for (colname in names(df)) {
+    missing_elems <- is.na(df[[colname]])
+    if (any(missing_elems))
+      df[[colname]][missing_elems] <- metadata[[colname]]
+  }
+  df
 }
 
 get_data <- function(x, ...) {
@@ -126,10 +157,24 @@ get_data <- function(x, ...) {
   flog.debug("Got %d data points", length(raw_data))
   
   # foreach feature, foreach data point, build up a data_frame
-  x$data <- map_dfc(x$features, function(feat) {
+  x$data <- imap_dfc(x$features, function(feat, pos) {
     flog.trace(glue("Extracting {feat$name}"))
     new_cols <- map_dfr(raw_data, ~ feat$extract(feat, .))
-    new_cols <- process_missing(new_cols, feat$na)
+    
+    # for both NA and transformations, first infer (possibly a no-op),
+    # storing needed info, then apply it. To predict, we'll just apply it.
+    if (anyNA(new_cols)) {
+      x$features[[pos]]$na_info <<- infer_missing(new_cols, feat$na)
+      new_cols <- apply_missing(new_cols, x$features[[pos]]$na_info)
+    }
+    
+    if (!is.null(feat$trans)) {
+      x$features[[pos]]$trans_info <<- infer_trans(new_cols, feat$trans)
+      new_cols <- apply_trans(new_cols, 
+                              feat$trans,
+                              x$features[[pos]]$trans_info)
+    }
+      
     new_cols
   })
   flog.debug("Loaded into %d X %d data_frame", nrow(x$data), ncol(x$data))

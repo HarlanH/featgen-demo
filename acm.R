@@ -11,6 +11,8 @@ suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(assertthat))
 suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(mlr))
+suppressPackageStartupMessages(library(AID))
+
 source("utils.R")
 source("dsl.R")
 
