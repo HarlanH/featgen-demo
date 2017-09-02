@@ -197,7 +197,9 @@ train <- function(x, ...) {
   
   # cross-validate to get metrics, then store
   cv_result <- crossval(lrn, task, iters = 10, keep.pred=FALSE)
-  x$metrics <- cv_result$aggr
+  x$metrics <- as.list(cv_result$aggr)
+  #browser()
+  flog.debug("metrics %f", x$metrics)
   
   # build a final model and add to self
   x$target <- args$target

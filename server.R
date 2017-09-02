@@ -6,7 +6,7 @@ function(req, ...) {
   
   # glance(model$model) %>%
   #   as.list() 
-  model$model$metrics
+  model$metrics
 }
 
 #* @post /predict
@@ -17,15 +17,27 @@ function(req, ...){
   # extract object into df and predict on that
   predictor_features <- model$features
   predictor_features[[model$target]] <- NULL # drop target
-  newdata <- map_dfc(predictor_features, function(feat) {
+  
+  # TODO: pull this into dsl.R?
+  newdata <- imap_dfc(predictor_features, function(feat, pos) {
     flog.trace(glue("Extracting {feat$name}"))
-    feat$extract(feat, obj)
+    new_cols <- feat$extract(feat, obj)
+    
+    if (anyNA(new_cols)) {
+      new_cols <- apply_missing(new_cols, model$features[[pos]]$na_info)
+    }
+    
+    if (!is.null(feat$trans)) {
+      new_cols <- apply_trans(new_cols, 
+                              feat$trans,
+                              model$features[[pos]]$trans_info)
+    }
+    new_cols
   })
-  #print(newdata)
+  
   ret <- list(x=predict(model$model, newdata=newdata)$data$response)
   names(ret) <- model$target
-  #print(ret)
-  #debug()
+
   flog.trace("done")
   ret
 }
