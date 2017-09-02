@@ -1,5 +1,14 @@
 # curl --data '{"Store": "test!", "CompetitionDistance": 0}' "http://localhost:8000/predict"
 
+#* @get /info
+function(req, ...) {
+  flog.info("Returning model info")
+  
+  # glance(model$model) %>%
+  #   as.list() 
+  model$model$metrics
+}
+
 #* @post /predict
 function(req, ...){
   obj <- list(...) # should be the same as the objects we trained on

@@ -13,11 +13,22 @@ shinyServer(function(input, output) {
     content(resp)$current_sales
   })
   
+  info <- reactive({
+    resp <- GET("http://localhost:8000/info")
+    content(resp)
+  })
+  
   output$score <- renderValueBox({
     valueBox(
       format(as.numeric(score()), nsmall=2),
       "Predicted Sales",
       icon=icon("usd")
     )
+  })
+  
+  output$model_stats <- renderTable({
+    info() %>%
+      as_data_frame() %>%
+      gather(stat, value)
   })
 })

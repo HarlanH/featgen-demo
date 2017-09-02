@@ -1,7 +1,7 @@
 acme_chain_model("rossman") %>%
   #square_feet(na='mean') %>%
   #store_type(collapse=c("a", "b")) %>%
-  competition_distance(trans='log') %>%
+  competition_distance(trans='log', na='median') %>%
   #one_week_ago_sales %>%
   #sales_weekly_trend(weeks_back=13, trunc_at=c(-.2,.2)) %>%
   #promo %>%

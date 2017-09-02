@@ -9,6 +9,8 @@ suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(futile.logger))
 suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(assertthat))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(mlr))
 source("utils.R")
 source("dsl.R")
 
@@ -26,7 +28,7 @@ args <- if (interactive()) {
   parser$parse_args()
 }
 
-if (args$varargs[[1]] == "train") {
+if (args$varargs[[1]] == "train") { # train --------
   flog.threshold(args$debug)
   flog.info("Starting train...")
   if (length(args$varargs) != 3) die("Usage: acm.R train infile.R outfile.Rout")
@@ -39,11 +41,13 @@ if (args$varargs[[1]] == "train") {
   
   saveRDS(model, file=outfilename)
   flog.info("Completed train!")
-} else if (args$varargs[[1]] == "server") {
+  
+} else if (args$varargs[[1]] == "server") { # server -----------
   flog.threshold(args$debug)
   flog.info("Starting server...")
   if (length(args$varargs) != 2) die("Usage: acm.R server infile.R")
   suppressPackageStartupMessages(library(plumber))
+  
   infilename <- args$varargs[[2]]
   model <- readRDS(infilename) # NB: we're in the global environment!
   flog.info("Model loaded")
@@ -52,20 +56,22 @@ if (args$varargs[[1]] == "train") {
   flog.info("Starting server...")
   server$run(port=as.numeric(args$port))
   flog.info("Closing...")
-} else if (args$varargs[[1]] == "client") {
+  
+} else if (args$varargs[[1]] == "client") { # client -------
   flog.info("Starting client...")
   shiny::runApp("client")
   flog.info("Closing...")
-} else if (args$varargs[[1]] == "print") {
+  
+} else if (args$varargs[[1]] == "print") { # print ---------
   if (length(args$varargs) != 2) die("Usage: acm.R print infile.R")
   infilename <- args$varargs[[2]]
   model <- readRDS(infilename)
   
   print(model)
-
-} else if (args$varargs[[1]] == "report") {
   
-} else if (args$varargs[[1]] == "test") {
+} else if (args$varargs[[1]] == "report") { # report -------
+  
+} else if (args$varargs[[1]] == "test") { # test --------
   suppressPackageStartupMessages(library(testthat))
   test_dir("test")
 } else {
