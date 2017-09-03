@@ -168,7 +168,8 @@ train <- function(x, ...) {
   lrn <- makeLearner("regr.lm")
   
   # cross-validate to get metrics, then store
-  cv_result <- crossval(lrn, task, iters = 10, keep.pred=FALSE)
+  cv_result <- crossval(lrn, task, iters = 10)
+  x$cv_preds <- getRRPredictions(cv_result)$data
   x$metrics <- as.list(cv_result$aggr)
   flog.debug("metrics %f", x$metrics)
   

@@ -72,7 +72,14 @@ if (args$varargs[[1]] == "train") { # train --------
   print(model)
   
 } else if (args$varargs[[1]] == "report") { # report -------
+  if (length(args$varargs) != 3) die("Usage: acm.R report infile.Rout outfile.html")
+  infilename <- args$varargs[[2]]
+  outfilename <- args$varargs[[3]]
+  model <- readRDS(infilename)
   
+  # TODO: find a better workaround here!
+  Sys.setenv(RSTUDIO_PANDOC="/Applications/RStudio.app/Contents/MacOS/pandoc")
+  rmarkdown::render("acm_report_template.Rmd", output_file=outfilename)
 } else if (args$varargs[[1]] == "test") { # test --------
   suppressPackageStartupMessages(library(testthat))
   test_dir("test")

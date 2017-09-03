@@ -1,0 +1,29 @@
+---
+title: "Acme Sales Model Report"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+This is a report for **`r tools::toTitleCase(model$custname)`**.
+
+# Features Used
+
+```{r feats, echo=FALSE, results='asis'}
+for (feat in model$features) {
+  cat(glue('* {feat$pretty_name}\n\n'))
+}
+```
+
+# Predictions
+
+```{r pred_graph, echo=FALSE}
+model$cv_preds %>%
+  ggplot(aes(response, truth)) +
+  geom_point(color='blue') +
+  geom_abline() +
+  coord_equal() +
+  xlab("Predicted") +
+  ylab("Actual") +
+  theme_bw()
+
+```
