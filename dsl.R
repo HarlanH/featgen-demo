@@ -130,8 +130,30 @@ get_data <- function(x, ...) {
   
   # foreach feature, foreach data point, build up a data_frame
   x$data <- imap_dfc(x$features, function(feat, pos) {
-    flog.trace(glue("Extracting {feat$name}"))
+    flog.debug(glue("Extracting {feat$name}"))
     new_cols <- map_dfr(raw_data, ~ feat$extract(feat, .))
+    
+    # trunc_to replaces with NAs; winsor_to replaces with edges
+    if (!is.null(feat$trunc_to)) {
+      assert_that(length(feat$trunc_to) == 2)
+      flog.debug("Truncating outside of %0.2f and %0.2f", 
+                 feat$trunc_to[[1]], feat$trunc_to[[2]])
+      new_cols <- map_dfc(new_cols, function(col) {
+        ifelse(between(col, feat$trunc_to[[1]], feat$trunc_to[[2]]),
+               col,
+               NA)
+      })
+    }
+    
+    if (!is.null(feat$winsor_to)) {
+      assert_that(length(feat$winsor_to) == 2)
+      flog.debug("Winsorizing outside of %0.2f and %0.2f", 
+                 feat$winsor_to[[1]], feat$winsor_to[[2]])
+      new_cols <- map_dfc(new_cols, function(col) {
+        pmax(pmin(col, feat$winsor_to[[2]]),
+             feat$winsor_to[[1]])
+      })
+    }
     
     # for both NA and transformations, first infer (possibly a no-op),
     # storing needed info, then apply it. To predict, we'll just apply it.
