@@ -31,6 +31,19 @@ print(sample_n(train_dat, 5))
 print(sample_n(store_dat, 5))
 ```
 
+```{r eda}
+train_dat %>%
+  group_by(Date) %>%
+  summarize(open_prop=mean(Open),
+            mean_sales=mean(Sales)) %>%
+  tail(30) %>%
+  gather("key", "value", open_prop, mean_sales) %>%
+  ggplot(aes(Date, value)) + geom_line() + facet_grid(key ~ ., scales="free_y")
+
+```
+
+We'll want to exclude closed store data points...
+
 ```{r transform, message=FALSE}
 # Convert each store into a list containing slots per column,
 # with a list of records for the train data.
@@ -40,8 +53,9 @@ print(sample_n(store_dat, 5))
 attr(train_dat, "spec") <- NULL
 attr(store_dat, "spec") <- NULL
 
-# records per store, with last 90 days of sales activity
-dat <- split(train_dat, train_dat$Store) %>%
+# records per store, with last 90 days of open sales activity
+train_data_open <- filter(train_dat, Open > 0)
+dat <- split(train_data_open, train_data_open$Store) %>%
   map(function(onestore) {
     ret <- filter(store_dat, Store == onestore$Store[[1]]) %>%
       as.list

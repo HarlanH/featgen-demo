@@ -28,7 +28,6 @@ shinyServer(function(input, output) {
   
   output$model_stats <- renderTable({
     info() %>%
-      as_data_frame() %>%
-      gather(stat, value)
+      bind_rows() 
   })
 })

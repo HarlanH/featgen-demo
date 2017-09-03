@@ -1,3 +1,5 @@
+# core DSL ---------
+
 acme_chain_model <- function(custname) {
   tracethis()
   obj <- list(custname = custname,
@@ -56,36 +58,6 @@ generic_feature <- list(
 #     data$activity[[self$name]]
 #   }
 # )
-
-competition_distance <- function(x, ...) {
-  assert_that(inherits(x, "acm"))
-  
-  feat <- generic_feature %>%
-    list_modify(name = "CompetitionDistance",
-                pretty_name = "Distance to Nearest Competition",
-                na = "mean")
-  feat <- list_modify(feat, ...)
-  
-  x$features <- list_modify(x$features, competition_distance = feat)
-  x
-}
-
-current_sales <- function(x, ...) {
-  assert_that(inherits(x, "acm"))
-  
-  feat <- list(
-    name="current_sales",
-    pretty_name="Current Sales",
-    extract = function(self, data, ...) {
-      data_frame(current_sales=data$activity[[length(data$activity)]]$Sales)
-    }
-  )
-  
-  feat <- list_modify(feat, ...)
-  
-  x$features <- list_modify(x$features, current_sales = feat)
-  x
-}
 
 infer_trans <- function(df, trans) {
   tracethis()
@@ -198,12 +170,80 @@ train <- function(x, ...) {
   # cross-validate to get metrics, then store
   cv_result <- crossval(lrn, task, iters = 10, keep.pred=FALSE)
   x$metrics <- as.list(cv_result$aggr)
-  #browser()
   flog.debug("metrics %f", x$metrics)
   
   # build a final model and add to self
   x$target <- args$target
   x$model <- mlr::train(lrn, task)
   
+  x
+}
+
+# features -----------
+
+# it's very likely some sort of function-generating function could
+# DRY this code some, but keeping it as-is for expository clarity...
+
+competition_distance <- function(x, ...) {
+  assert_that(inherits(x, "acm"))
+  
+  feat <- generic_feature %>%
+    list_modify(name = "CompetitionDistance",
+                pretty_name = "Distance to Nearest Competition",
+                na = "mean")
+  feat <- list_modify(feat, ...)
+  
+  x$features <- list_modify(x$features, competition_distance = feat)
+  x
+}
+
+current_sales <- function(x, ...) {
+  assert_that(inherits(x, "acm"))
+  
+  feat <- list(
+    name="current_sales",
+    pretty_name="Current Sales",
+    extract = function(self, data, ...) {
+      data_frame(current_sales=data$activity[[length(data$activity)]]$Sales)
+    }
+  )
+  
+  feat <- list_modify(feat, ...)
+  
+  x$features <- list_modify(x$features, current_sales = feat)
+  x
+}
+
+promo <- function(x, ...) {
+  assert_that(inherits(x, "acm"))
+  
+  feat <- list(
+    name="promo",
+    pretty_name="Prior Week Sales",
+    extract = function(self, data, ...) {
+      data_frame(promo=data$activity[[length(data$activity)]]$Promo)
+    }
+  )
+  
+  feat <- list_modify(feat, ...)
+  
+  x$features <- list_modify(x$features, promo = feat)
+  x
+}
+
+one_week_ago_sales <- function(x, ...) {
+  assert_that(inherits(x, "acm"))
+  
+  feat <- list(
+    name="one_week_ago_sales",
+    pretty_name="Prior Week Sales",
+    extract = function(self, data, ...) {
+      data_frame(one_week_ago_sales=data$activity[[length(data$activity)-1]]$Sales)
+    }
+  )
+  
+  feat <- list_modify(feat, ...)
+  
+  x$features <- list_modify(x$features, one_week_ago_sales = feat)
   x
 }

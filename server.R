@@ -4,9 +4,9 @@
 function(req, ...) {
   flog.info("Returning model info")
   
-  # glance(model$model) %>%
-  #   as.list() 
-  model$metrics
+  tidy(model$model$learner.model) %>% 
+    select(thing=term, value=estimate) %>%
+    bind_rows(data_frame(thing="MSE", value=model$metrics[[1]]))
 }
 
 #* @post /predict
