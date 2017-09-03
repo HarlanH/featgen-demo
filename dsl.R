@@ -261,12 +261,40 @@ one_week_ago_sales <- function(x, ...) {
     name="one_week_ago_sales",
     pretty_name="Prior Week Sales",
     extract = function(self, data, ...) {
-      data_frame(one_week_ago_sales=data$activity[[length(data$activity)-1]]$Sales)
+      data_frame(one_week_ago_sales=data$activity[[length(data$activity)-7]]$Sales)
     }
   )
   
   feat <- list_modify(feat, ...)
   
   x$features <- list_modify(x$features, one_week_ago_sales = feat)
+  x
+}
+
+sales_trend <- function(x, ...) {
+  assert_that(inherits(x, "acm"))
+  
+  feat <- list(
+    name="sales_trend",
+    pretty_name="Sales Trend",
+    days_back=7,
+    extract = function(self, data, ...) {
+      # extract specific number of days, fit a linear model, and record 
+      # the slope
+      from = length(data$activity) - self$days_back 
+      to = length(data$activity) - 1
+      sales <- map_dbl(data$activity[from:to], 
+                       ~ .$Sales)
+      df <- data_frame(time=seq_len(self$days_back),
+                       sales=sales)
+      mod <- lm(sales ~ time, df)
+      
+      data_frame(sales_trend=coef(mod)[['time']])
+    }
+  )
+  
+  feat <- list_modify(feat, ...)
+  
+  x$features <- list_modify(x$features, sales_trend = feat)
   x
 }
