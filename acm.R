@@ -12,9 +12,11 @@ suppressPackageStartupMessages(library(assertthat))
 suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(mlr))
 suppressPackageStartupMessages(library(AID))
+suppressPackageStartupMessages(library(forcats))
 
 source("utils.R")
 source("dsl.R")
+source("features.R")
 
 parser <- ArgumentParser(description='Acme Sales Model')
 parser$add_argument("--debug", default="INFO",
