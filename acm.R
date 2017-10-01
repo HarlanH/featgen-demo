@@ -4,17 +4,8 @@ options(stringsAsFactors = FALSE,
         warnPartialMatchArgs = TRUE,
         warnPartialMatchAttr = TRUE,
         warnPartialMatchDollar = TRUE)
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(argparse))
-suppressPackageStartupMessages(library(futile.logger))
-suppressPackageStartupMessages(library(glue))
-suppressPackageStartupMessages(library(assertthat))
-suppressPackageStartupMessages(library(broom))
-suppressPackageStartupMessages(library(mlr))
-suppressPackageStartupMessages(library(AID))
-suppressPackageStartupMessages(library(forcats))
 
-source("utils.R")
+source("utils.R") # loads all needed packages
 source("dsl.R")
 source("features.R")
 
@@ -24,7 +15,7 @@ parser$add_argument("--debug", default="INFO",
 parser$add_argument("--port", 
                     help="Port for server (default 8000) or client (default 8001)")
 parser$add_argument('varargs', metavar='command', nargs='+',
-                    help='train <from> <to>, server <from>, client, report <from> <to>, <test>')
+                    help='train <from> <to>, server <from>, client, report <from> <to>, test')
 
 args <- if (interactive()) {
   parser$parse_args(c("train", "rossman_model.R", "rossman_model.Rout", "--debug=TRACE"))

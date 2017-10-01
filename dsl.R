@@ -1,5 +1,9 @@
 # core DSL ---------
 
+#' Object constructor for a specific acm model
+#' 
+#' @param custname string, name of the customer; must be name of data file
+#' @return an object of class "acm"
 acme_chain_model <- function(custname) {
   tracethis()
   obj <- list(custname = custname,
@@ -8,6 +12,7 @@ acme_chain_model <- function(custname) {
   obj
 }
 
+#' Print method for ACM objects.
 print.acm <- function(obj, ...) {
   
   cat(glue("
@@ -40,6 +45,10 @@ print.acm <- function(obj, ...) {
   }
 }
 
+# Feature utilities ----------
+
+#' Helper template for top-level simple features.
+#' Use `list_modify` to customize.
 generic_feature <- list(
   name="REPLACEME -- must be the name of the slot",
   pretty_name="Replace Me Too",
@@ -59,6 +68,18 @@ generic_feature <- list(
 #   }
 # )
 
+# Transformations --------
+
+#' Perform any computation needed on data before transformation.
+#' 
+#' Results will be stored as metadata for `apply_trans`.
+#' 
+#' Currently stores the lambda value for Box-Cox transformation,
+#' and does no-op for log and sqrt transformations.
+#' 
+#' @param df a data frame with columns to process
+#' @param trans one of "log", "sqrt", "boxcox"
+#' @return a data frame with the same columns as df, and one row, or NULL
 infer_trans <- function(df, trans) {
   tracethis()
   assert_that(is.data.frame(df))
@@ -71,6 +92,12 @@ infer_trans <- function(df, trans) {
   } else NULL
 }
 
+#' Transform the specified data frame, leveraging earlier metadata
+#' 
+#' @param df a data frame
+#' @param trans one of "log", "sqrt", "boxcox"
+#' @param metadata from `infer_trans`
+#' @return a data frame the same size as df
 apply_trans <- function(df, trans, metadata) {
   tracethis()
   assert_that(is.data.frame(df))
@@ -109,6 +136,11 @@ infer_missing <- function(df, policy) {
   })
 }
 
+#' part 2 of NA/missing data policy
+#' 
+#' @param df a data frame
+#' @param metadata from `infer_missing`
+#' @return data frame with no missing data
 apply_missing <- function(df, metadata) {
   assert_that(are_equal(names(df), names(metadata)))
   
@@ -120,6 +152,13 @@ apply_missing <- function(df, metadata) {
   df
 }
 
+# Fixed DSL verbs ------
+
+#' Load data and process into data frame for training
+#' 
+#' @param x an ACM object with `custname` slot as name of data file
+#' @param ... not currently used?
+#' @return object with new `data` slot
 get_data <- function(x, ...) {
   tracethis()
   assert_that(inherits(x, "acm"))
@@ -190,13 +229,18 @@ get_data <- function(x, ...) {
   x
 }
 
+#' Train a model
+#' 
+#' @param x an ACM object with `features`, `data`
+#' @param ... parameters; must include `target`
+#' @return object with new `cv_preds`, `metrics`, `target`, and `model` slots
 train <- function(x, ...) {
   tracethis()
   assert_that(inherits(x, "acm"))
   assert_that(x %has_name% "features")
   assert_that(x %has_name% "data")
   args <- list(...)
-  assert_that(args %has_name% "target")
+  assert_that(args %has_name% "target") # TODO: make a real param!
   
   # set up learning framework
   flog.debug("setting up learning framework")
@@ -214,4 +258,42 @@ train <- function(x, ...) {
   x$model <- mlr::train(lrn, task)
   
   x
+}
+
+#' Predict on a JSON object
+#' 
+#' @param x an ACM object with `features` and `model` and `target`
+#' @param obj a JSON-structure list object
+#' @return a list with one value, named after the target
+predict.acm <- function(x, obj) {
+  tracethis()
+  assert_that(inherits(x, "acm"))
+  assert_that(x %has_name% "features")
+  assert_that(x %has_name% "target")
+  assert_that(x %has_name% "model")
+  
+  # extract object into df and predict on that
+  predictor_features <- x$features
+  predictor_features[[x$target]] <- NULL # drop target
+  
+  newdata <- imap_dfc(predictor_features, function(feat, pos) {
+    flog.trace(glue("Extracting {feat$name}"))
+    new_cols <- feat$extract(feat, obj)
+    
+    if (anyNA(new_cols)) {
+      new_cols <- apply_missing(new_cols, x$features[[pos]]$na_info)
+    }
+    
+    if (!is.null(feat$trans)) {
+      new_cols <- apply_trans(new_cols, 
+                              feat$trans,
+                              x$features[[pos]]$trans_info)
+    }
+    new_cols
+  })
+  
+  ret <- list(x=predict(x$model, newdata=newdata)$data$response)
+  names(ret) <- x$target
+  
+  ret
 }
