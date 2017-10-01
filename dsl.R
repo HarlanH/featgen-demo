@@ -147,25 +147,25 @@ get_data <- function(x, ...) {
       }
     }
     
-    # trunc_to replaces with NAs; winsor_to replaces with edges
-    if (!is.null(feat$trunc_to)) {
-      assert_that(length(feat$trunc_to) == 2)
-      flog.debug("Truncating outside of %0.2f and %0.2f", 
-                 feat$trunc_to[[1]], feat$trunc_to[[2]])
+    # trim to null, cap at value, windsorize at percent
+    if (!is.null(feat$trim_to)) {
+      assert_that(length(feat$trim_to) == 2)
+      flog.debug("Trimming to NA outside of %0.2f and %0.2f", 
+                 feat$trim_to[[1]], feat$trim_to[[2]])
       new_cols <- map_dfc(new_cols, function(col) {
-        ifelse(between(col, feat$trunc_to[[1]], feat$trunc_to[[2]]),
+        ifelse(between(col, feat$trim_to[[1]], feat$trim_to[[2]]),
                col,
                NA)
       })
     }
     
-    if (!is.null(feat$winsor_to)) {
-      assert_that(length(feat$winsor_to) == 2)
-      flog.debug("Winsorizing outside of %0.2f and %0.2f", 
-                 feat$winsor_to[[1]], feat$winsor_to[[2]])
+    if (!is.null(feat$cap_to)) {
+      assert_that(length(feat$cap_to) == 2)
+      flog.debug("Capping outside of %0.2f and %0.2f", 
+                 feat$cap_to[[1]], feat$cap_to[[2]])
       new_cols <- map_dfc(new_cols, function(col) {
-        pmax(pmin(col, feat$winsor_to[[2]]),
-             feat$winsor_to[[1]])
+        pmax(pmin(col, feat$cap_to[[2]]),
+             feat$cap_to[[1]])
       })
     }
     
