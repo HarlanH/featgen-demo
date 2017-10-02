@@ -1,10 +1,5 @@
 #!/usr/bin/env Rscript
 
-options(stringsAsFactors = FALSE,
-        warnPartialMatchArgs = TRUE,
-        warnPartialMatchAttr = TRUE,
-        warnPartialMatchDollar = TRUE)
-
 source("utils.R") # loads all needed packages
 source("dsl.R")
 source("features.R")
@@ -15,7 +10,7 @@ parser$add_argument("--debug", default="INFO",
 parser$add_argument("--port", 
                     help="Port for server (default 8000) or client (default 8001)")
 parser$add_argument('varargs', metavar='command', nargs='+',
-                    help='train <from> <to>, server <from>, client, report <from> <to>, test')
+                    help='train <from> <to>, server <from>, client, report <from> <to>')
 
 args <- if (interactive()) {
   parser$parse_args(c("train", "rossman_model.R", "rossman_model.Rout", "--debug=TRACE"))
@@ -73,9 +68,7 @@ if (args$varargs[[1]] == "train") { # train --------
   # TODO: find a better workaround here!
   Sys.setenv(RSTUDIO_PANDOC="/Applications/RStudio.app/Contents/MacOS/pandoc")
   rmarkdown::render("acm_report_template.Rmd", output_file=outfilename)
-} else if (args$varargs[[1]] == "test") { # test --------
-  suppressPackageStartupMessages(library(testthat))
-  test_dir("test")
+
 } else {
   die(paste("Unknown args", args, collapse=", "))
 }

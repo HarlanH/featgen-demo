@@ -104,7 +104,7 @@ apply_trans <- function(df, trans, metadata) {
   assert_that(trans %in% c('log', 'sqrt', 'boxcox'))
   
   if (trans %in% c('log', 'sqrt')) {
-    map_dfc(df, ~ do.call(trans, .))
+    map_dfc(df, ~ do.call(trans, list(.)))
   } else if (trans == 'boxcox') {
     imap_dfc(df, function(col, pos) {
       if (metadata[[pos]] == 0) 
@@ -131,8 +131,8 @@ infer_missing <- function(df, policy) {
       do.call(policy, args=list(col, na.rm=TRUE))
     else if (policy == 'mode') {
       val <- names(which.max(table(col, useNA="no")))
-      as(val, class(col))
-    } else as(policy, class(col))
+      methods::as(val, class(col))  # fails in test without package name??
+    } else methods::as(policy, class(col))
   })
 }
 

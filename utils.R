@@ -1,3 +1,8 @@
+options(stringsAsFactors = FALSE,
+        warnPartialMatchArgs = TRUE,
+        warnPartialMatchAttr = TRUE,
+        warnPartialMatchDollar = TRUE)
+
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(futile.logger))
